@@ -17,6 +17,17 @@
   const resultsEndpoint = 'https://kxwhwmxzmtvueksyayvz.supabase.co/functions/v1/submit-dagvat-quiz';
   const localPreview = ['127.0.0.1', 'localhost'].includes(location.hostname);
   const $ = id => document.getElementById(id);
+  function fillGroupSelect(id, placeholder) {
+    const select = $(id);
+    select.add(new Option(placeholder, ''));
+    const block = document.createElement('optgroup');
+    block.label = 'Дагват, 1 курс';
+    for (let number = 1; number <= 3; number++) {
+      const value = `Дагват, 1 курс — ${number} группа`;
+      block.append(new Option(value, value));
+    }
+    select.add(block);
+  }
   const screens = ['home', 'intro', 'review', 'identity', 'quiz', 'result'];
   const stageNames = {
     intro: 'Дәрес белән танышу', review: 'Сораулар аша кабатлау',
@@ -157,14 +168,19 @@
   }
   setupHome();
   setupLesson();
-  $('studentGroup').value = params.get('group') || '';
+  fillGroupSelect('teacherGroup', 'Группу выберет ученик');
+  fillGroupSelect('studentGroup', 'Выберите группу');
+  const presetGroup = params.get('group') || '';
+  if (presetGroup && [...$('studentGroup').options].some(option => option.value === presetGroup)) {
+    $('studentGroup').value = presetGroup;
+  }
 
   $('copyLinkBtn').addEventListener('click', async () => {
     const copied = await copyText(lessonUrl(), $('teacherLink'));
     $('copyNote').textContent = copied ? 'Сылтама күчереп алынды.' : 'Сылтаманы астагы юлдан күчереп алыгыз.';
   });
   for (const id of ['teacherLesson', 'teacherGroup']) {
-    $(id).addEventListener(id === 'teacherLesson' ? 'change' : 'input', () => {
+    $(id).addEventListener('change', () => {
       $('teacherLink').classList.add('hidden');
       $('copyNote').textContent = '';
     });
@@ -181,7 +197,7 @@
   });
   $('startTestBtn').addEventListener('click', () => {
     if (!$('studentName').value.trim() || !$('studentGroup').value.trim()) {
-      $('identityError').textContent = 'Исем-фамилия һәм төркем юлларын тутырыгыз.';
+      $('identityError').textContent = 'Исем-фамилияне языгыз һәм группаны сайлагыз.';
       $('identityError').classList.remove('hidden');
       return;
     }
