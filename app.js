@@ -70,6 +70,34 @@
   function setupLesson() {
     if (!current) return;
     $('introTitle').textContent = current.title;
+    const reading = window.READING_DATA?.[current.n];
+    const article = $('lessonReading');
+    article.replaceChildren();
+    article.classList.toggle('hidden', !reading);
+    if (reading) {
+      const paragraph = (content, className) => {
+        const element = document.createElement('p');
+        element.textContent = content;
+        if (className) element.className = className;
+        return element;
+      };
+      const heading = content => {
+        const element = document.createElement('h2');
+        element.textContent = content;
+        return element;
+      };
+      article.append(paragraph(reading.intro, 'reading-intro'));
+      reading.sections.forEach(([title, content], index) => {
+        const section = document.createElement('section');
+        section.className = `reading-section ${index % 2 ? 'lavender' : 'cream'}`;
+        section.append(heading(title), paragraph(content));
+        article.append(section);
+      });
+      const takeaway = document.createElement('aside');
+      takeaway.className = 'reading-takeaway';
+      takeaway.append(heading('Дәреснең төп фикере'), paragraph(reading.takeaway));
+      article.append(takeaway);
+    }
     if (byNumber.has(requested)) {
       document.title = `${current.n} нче дәрес — Дагват`;
       $('coursePill').textContent = `${current.n} нче дәрес`;
