@@ -1,9 +1,12 @@
 (() => {
   'use strict';
 
-  const lessons = Array.isArray(window.COURSE_DATA) ? window.COURSE_DATA : [];
-  const byNumber = new Map(lessons.map(lesson => [lesson.n, lesson]));
   const params = new URLSearchParams(location.search);
+  const isRussian = params.get('lang') === 'ru';
+  const t = (tt, ru) => isRussian ? ru : tt;
+  const tatarLessons = Array.isArray(window.COURSE_DATA) ? window.COURSE_DATA : [];
+  const lessons = isRussian ? (Array.isArray(window.COURSE_DATA_RU) ? window.COURSE_DATA_RU : []) : tatarLessons;
+  const byNumber = new Map(lessons.map(lesson => [lesson.n, lesson]));
   const requested = Number(params.get('lesson'));
   let current = byNumber.get(requested) || lessons[0];
   let reviewIndex = 0;
@@ -16,8 +19,70 @@
   let sent = false;
   let sending = false;
   const resultsEndpoint = 'https://kxwhwmxzmtvueksyayvz.supabase.co/functions/v1/submit-dagvat-quiz';
-  const localPreview = ['127.0.0.1', 'localhost'].includes(location.hostname);
+  const localPreview = location.protocol === 'file:' || ['127.0.0.1', 'localhost'].includes(location.hostname);
   const $ = id => document.getElementById(id);
+  function setupLanguage() {
+    document.documentElement.lang = isRussian ? 'ru' : 'tt';
+    const nav = document.createElement('nav');
+    nav.className = 'language-switch';
+    nav.setAttribute('aria-label', 'Тел / Язык');
+    for (const [label, lang] of [['Татарча', 'tt'], ['Русский', 'ru']]) {
+      const link = document.createElement('a');
+      const url = new URL(location.href);
+      if (lang === 'tt') url.searchParams.delete('lang');
+      else url.searchParams.set('lang', 'ru');
+      link.href = url.toString();
+      link.textContent = label;
+      link.lang = lang;
+      if ((lang === 'ru') === isRussian) link.setAttribute('aria-current', 'page');
+      nav.append(link);
+    }
+    document.querySelector('.top').insertBefore(nav, $('coursePill'));
+    if (!isRussian) return;
+    const set = (selector, value) => {
+      const node = document.querySelector(selector);
+      if (node) node.textContent = value;
+    };
+    const label = (selector, value) => {
+      const node = document.querySelector(selector);
+      if (node?.firstChild) node.firstChild.textContent = value;
+    };
+    set('.brand strong', 'Уроки дагвата');
+    set('.brand small', '25 УРОКОВ');
+    set('#coursePill', '25 уроков');
+    set('#home .grid > div > .eyebrow', 'Дагват');
+    set('#home h1', 'Уроки и проверка знаний');
+    set('#home .lead', 'На каждом уроке сначала читаем текст и повторяем тему по семи вопросам. Затем отвечаем на шесть тестовых вопросов и одно открытое задание.');
+    set('#home .teacher .eyebrow', 'Для преподавателя');
+    set('#home .teacher h2', 'Ссылка на урок');
+    set('#home .teacher > p:nth-of-type(2)', 'Выберите урок и группу, затем отправьте ученику готовую ссылку.');
+    label('#home .teacher label:nth-of-type(1)', 'Урок');
+    label('#home .teacher label:nth-of-type(2)', 'Группа');
+    set('#copyLinkBtn', 'Скопировать ссылку');
+    set('#home .teacher a', 'Журнал результатов →');
+    set('#intro .eyebrow', 'Текст урока');
+    set('#intro > .lead', 'После чтения попробуйте сами ответить на семь вопросов и сравните ответы с готовыми. Затем вас ждут шесть тестовых вопросов и открытое задание.');
+    set('#startReviewBtn', 'Перейти к вопросам');
+    set('#review .eyebrow', 'Повторение по вопросам');
+    set('#review .lead', 'Сначала обдумайте ответ сами, затем сравните с готовым.');
+    set('#reviewAnswer strong', 'Ответ');
+    set('#showAnswerBtn', 'Посмотреть ответ');
+    set('#identity .eyebrow', 'Сведения об ученике');
+    set('#identity h2', 'Кто проходит тест?');
+    set('#identity .lead', 'Напишите имя и фамилию и выберите группу, чтобы результат был виден преподавателю.');
+    label('#identity label:nth-of-type(1)', 'Имя и фамилия');
+    label('#identity label:nth-of-type(2)', 'Группа');
+    set('#startTestBtn', 'Начать тест');
+    label('#openWrap label', 'Ваш ответ');
+    $('openAnswer').placeholder = 'Напишите здесь своими словами';
+    set('#result .eyebrow', 'Урок завершён');
+    set('#result h1', 'Машааллах, вы прошли урок!');
+    set('#result .score span', 'Верных ответов');
+    set('#result .note', 'Ваш открытый ответ также можно посмотреть в журнале преподавателя.');
+    set('#result h2', 'Ваш открытый ответ');
+    set('#sendResultBtn', 'Отправить ещё раз');
+    set('#retryBtn', 'Пройти ещё раз');
+  }
   function fillGroupSelect(id, placeholder) {
     const select = $(id);
     select.add(new Option(placeholder, ''));
@@ -25,14 +90,15 @@
     block.label = 'Дагват, 1 курс';
     for (let number = 1; number <= 3; number++) {
       const value = `Дагват, 1 курс — ${number} группа`;
-      block.append(new Option(value, value));
+      const display = t(`Дагват, 1 курс — ${number} төркем`, value);
+      block.append(new Option(display, value));
     }
     select.add(block);
   }
   const screens = ['home', 'intro', 'review', 'identity', 'quiz', 'result'];
   const stageNames = {
-    intro: 'Дәрес белән танышу', review: 'Сораулар аша кабатлау',
-    identity: 'Укучы турында мәгълүмат', quiz: 'Белемне тикшерү', result: 'Дәрес тәмам'
+    intro: t('Дәрес белән танышу', 'Знакомство с уроком'), review: t('Сораулар аша кабатлау', 'Повторение по вопросам'),
+    identity: t('Укучы турында мәгълүмат', 'Сведения об ученике'), quiz: t('Белемне тикшерү', 'Проверка знаний'), result: t('Дәрес тәмам', 'Урок завершён')
   };
 
   function show(screen) {
@@ -52,7 +118,7 @@
     lessons.forEach(lesson => {
       const link = document.createElement('a');
       link.className = 'card';
-      link.href = `?lesson=${lesson.n}`;
+      link.href = `?lesson=${lesson.n}${isRussian ? '&lang=ru' : ''}`;
       const number = document.createElement('span');
       number.className = 'number';
       number.textContent = lesson.n;
@@ -71,7 +137,7 @@
   function setupLesson() {
     if (!current) return;
     $('introTitle').textContent = current.title;
-    const reading = window.READING_DATA?.[current.n];
+    const reading = (isRussian ? window.READING_DATA_RU : window.READING_DATA)?.[current.n];
     const article = $('lessonReading');
     article.replaceChildren();
     article.classList.toggle('hidden', !reading);
@@ -96,12 +162,12 @@
       });
       const takeaway = document.createElement('aside');
       takeaway.className = 'reading-takeaway';
-      takeaway.append(heading('Дәреснең төп фикере'), paragraph(reading.takeaway));
+      takeaway.append(heading(t('Дәреснең төп фикере', 'Главная мысль урока')), paragraph(reading.takeaway));
       article.append(takeaway);
     }
     if (byNumber.has(requested)) {
-      document.title = `${current.n} нче дәрес — Дагват`;
-      $('coursePill').textContent = `${current.n} нче дәрес`;
+      document.title = t(`${current.n} нче дәрес — Дагват`, `Урок ${current.n} — Дагват`);
+      $('coursePill').textContent = t(`${current.n} нче дәрес`, `Урок ${current.n}`);
     }
   }
 
@@ -109,6 +175,7 @@
     const url = new URL(location.href);
     url.search = '';
     url.searchParams.set('lesson', $('teacherLesson').value);
+    if (isRussian) url.searchParams.set('lang', 'ru');
     const group = $('teacherGroup').value.trim();
     if (group) url.searchParams.set('group', group);
     return url.toString();
@@ -138,7 +205,7 @@
     $('reviewAnswer').classList.add('hidden');
     $('showAnswerBtn').classList.remove('hidden');
     $('nextReviewBtn').classList.add('hidden');
-    $('nextReviewBtn').textContent = reviewIndex === current.study.length - 1 ? 'Тестка әзерләнергә' : 'Киләсе сорау';
+    $('nextReviewBtn').textContent = reviewIndex === current.study.length - 1 ? t('Тестка әзерләнергә', 'Подготовиться к тесту') : t('Киләсе сорау', 'Следующий вопрос');
   }
 
   function renderQuiz() {
@@ -149,8 +216,8 @@
     $('quizOptions').replaceChildren();
     $('quizOptions').classList.toggle('hidden', isOpen);
     $('openWrap').classList.toggle('hidden', !isOpen);
-    $('quizEyebrow').textContent = isOpen ? 'Ачык бирем · 7 / 7' : `Тест · ${quizIndex + 1} / ${current.questions.length}`;
-    $('nextQuizBtn').textContent = isOpen ? 'Дәресне тәмамларга' : 'Тикшерергә';
+    $('quizEyebrow').textContent = isOpen ? t('Ачык бирем · 7 / 7', 'Открытое задание · 7 / 7') : `Тест · ${quizIndex + 1} / ${current.questions.length}`;
+    $('nextQuizBtn').textContent = isOpen ? t('Дәресне тәмамларга', 'Завершить урок') : t('Тикшерергә', 'Проверить');
     if (isOpen) {
       $('quizQuestion').textContent = current.open;
       $('openAnswer').value = openText;
@@ -167,7 +234,7 @@
       input.value = String(index);
       const letter = document.createElement('span');
       letter.className = 'letter';
-      letter.textContent = ['А', 'Ә', 'Б'][index];
+      letter.textContent = (isRussian ? ['А', 'Б', 'В'] : ['А', 'Ә', 'Б'])[index];
       const text = document.createElement('span');
       text.textContent = answer;
       label.append(input, letter, text);
@@ -178,7 +245,7 @@
   function finish() {
     const right = current.questions.map((question, index) => Number(quizAnswers[index] === question.a));
     $('scoreText').textContent = `${right.reduce((a, b) => a + b, 0)} / ${current.questions.length}`;
-    $('resultText').textContent = `${$('studentName').value.trim()} · ${$('studentGroup').value.trim()}. Җавапларны карап, дәресне кабат үтәргә мөмкин.`;
+    $('resultText').textContent = `${$('studentName').value.trim()} · ${$('studentGroup').value.trim()}. ${t('Җавапларны карап, дәресне кабат үтәргә мөмкин.', 'Вы можете посмотреть ответы и пройти урок ещё раз.')}`;
     $('openPreview').textContent = openText;
     $('sendResultBtn').classList.add('hidden');
     $('sendInstruction').textContent = '';
@@ -186,21 +253,22 @@
     $('resultSendNote').textContent = '';
     show('result');
     if (localPreview) {
-      $('sendInstruction').textContent = 'Бу — карау өчен үрнәк. Әлегә нәтиҗә укытучы журналына җибәрелми.';
+      $('sendInstruction').textContent = t('Бу — карау өчен үрнәк. Әлегә нәтиҗә укытучы журналына җибәрелми.', 'Это предварительный просмотр. Результат сейчас не отправляется в журнал преподавателя.');
       $('sendInstruction').classList.remove('hidden');
     } else {
       void sendResult();
     }
   }
 
-  if (!current || lessons.length !== 25) {
-    document.querySelector('main').textContent = 'Дәрес мәгълүматларын йөкләп булмады.';
+  if (!current || lessons.length !== 25 || tatarLessons.length !== 25) {
+    document.querySelector('main').textContent = t('Дәрес мәгълүматларын йөкләп булмады.', 'Не удалось загрузить данные уроков.');
     return;
   }
+  setupLanguage();
   setupHome();
   setupLesson();
-  fillGroupSelect('teacherGroup', 'Группу выберет ученик');
-  fillGroupSelect('studentGroup', 'Выберите группу');
+  fillGroupSelect('teacherGroup', t('Группу выберет ученик', 'Группу выберет ученик'));
+  fillGroupSelect('studentGroup', t('Төркемне сайлагыз', 'Выберите группу'));
   const presetGroup = params.get('group') || '';
   if (presetGroup && [...$('studentGroup').options].some(option => option.value === presetGroup)) {
     $('studentGroup').value = presetGroup;
@@ -208,7 +276,7 @@
 
   $('copyLinkBtn').addEventListener('click', async () => {
     const copied = await copyText(lessonUrl(), $('teacherLink'));
-    $('copyNote').textContent = copied ? 'Сылтама күчереп алынды.' : 'Сылтаманы астагы юлдан күчереп алыгыз.';
+    $('copyNote').textContent = copied ? t('Сылтама күчереп алынды.', 'Ссылка скопирована.') : t('Сылтаманы астагы юлдан күчереп алыгыз.', 'Скопируйте ссылку из поля ниже.');
   });
   for (const id of ['teacherLesson', 'teacherGroup']) {
     $(id).addEventListener('change', () => {
@@ -228,7 +296,7 @@
   });
   $('startTestBtn').addEventListener('click', () => {
     if (!$('studentName').value.trim() || !$('studentGroup').value.trim()) {
-      $('identityError').textContent = 'Исем-фамилияне языгыз һәм группаны сайлагыз.';
+      $('identityError').textContent = t('Исем-фамилияне языгыз һәм группаны сайлагыз.', 'Напишите имя и фамилию и выберите группу.');
       $('identityError').classList.remove('hidden');
       return;
     }
@@ -247,7 +315,7 @@
       if (checked) { quizIndex++; renderQuiz(); window.scrollTo(0, 0); return; }
       const chosen = document.querySelector('input[name="choice"]:checked');
       if (!chosen) {
-        $('quizError').textContent = 'Бер җавапны сайлагыз.';
+        $('quizError').textContent = t('Бер җавапны сайлагыз.', 'Выберите один ответ.');
         $('quizError').classList.remove('hidden');
         return;
       }
@@ -263,15 +331,15 @@
         if (index === selected && !correct) option.classList.add('wrong');
       });
       $('quizFeedback').className = `feedback ${correct ? 'right' : 'wrong'}`;
-      $('feedbackTitle').textContent = correct ? 'Дөрес җавап!' : 'Бу җавап дөрес түгел.';
-      $('feedbackText').textContent = `Дөрес җавап: ${item.o[item.a]}`;
+      $('feedbackTitle').textContent = correct ? t('Дөрес җавап!', 'Правильный ответ!') : t('Бу җавап дөрес түгел.', 'Этот ответ неверный.');
+      $('feedbackText').textContent = `${t('Дөрес җавап:', 'Правильный ответ:')} ${item.o[item.a]}`;
       $('quizError').classList.add('hidden');
-      $('nextQuizBtn').textContent = 'Алга';
+      $('nextQuizBtn').textContent = t('Алга', 'Далее');
       return;
     }
     openText = $('openAnswer').value.trim();
     if (!openText) {
-      $('quizError').textContent = 'Ачык биремгә җавап языгыз.';
+      $('quizError').textContent = t('Ачык биремгә җавап языгыз.', 'Напишите ответ на открытое задание.');
       $('quizError').classList.remove('hidden');
       return;
     }
@@ -292,7 +360,7 @@
       studentName: $('studentName').value.trim(),
       group: $('studentGroup').value.trim(),
       lessonId: current.n,
-      lessonTitle: current.title,
+      lessonTitle: tatarLessons[current.n - 1].title,
       score,
       total: current.questions.length,
       durationSeconds: Math.min(86400, Math.max(1, Math.round((Date.now() - startedAt) / 1000))),
@@ -302,7 +370,7 @@
         correct: question.a,
         isCorrect: quizAnswers[index] === question.a
       })),
-      openQuestion: current.open,
+      openQuestion: tatarLessons[current.n - 1].open,
       openAnswer: openText
     };
     try {
@@ -315,14 +383,14 @@
       const result = await response.json();
       if (!response.ok || !result.ok) throw new Error(result.error || 'send_failed');
       sent = true;
-      $('sendInstruction').textContent = 'Эшегез укытучы журналына теркәлде.';
+      $('sendInstruction').textContent = t('Эшегез укытучы журналына теркәлде.', 'Ваша работа записана в журнале преподавателя.');
       $('sendInstruction').classList.remove('hidden');
       $('resultSendNote').textContent = '';
     } catch {
       button.disabled = false;
-      button.textContent = 'Кабат җибәрергә';
+      button.textContent = t('Кабат җибәрергә', 'Отправить ещё раз');
       button.classList.remove('hidden');
-      $('sendInstruction').textContent = 'Эшегез журналга теркәлмәде. Кабат җибәрергә кирәк.';
+      $('sendInstruction').textContent = t('Эшегез журналга теркәлмәде. Кабат җибәрергә кирәк.', 'Работа не записана в журнале. Отправьте ещё раз.');
       $('sendInstruction').classList.remove('hidden');
       $('resultSendNote').textContent = '';
     } finally {
@@ -331,7 +399,7 @@
   }
   $('sendResultBtn').addEventListener('click', sendResult);
   $('retryBtn').addEventListener('click', () => {
-    if (!sent && !confirm('Нәтиҗә әле укытучыга җибәрелмәде. Чыннан да кабат үтәргәме?')) return;
+    if (!sent && !confirm(t('Нәтиҗә әле укытучыга җибәрелмәде. Чыннан да кабат үтәргәме?', 'Результат ещё не записан в журнале. Действительно пройти урок ещё раз?'))) return;
     reviewIndex = quizIndex = 0;
     quizAnswers = [];
     openText = '';

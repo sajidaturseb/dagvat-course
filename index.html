@@ -30,8 +30,9 @@
     .score div,.open-preview{background:#f7f2fa}.summary,.note,.result-instruction{background:#fbf6ed}
     input[type=text],select,textarea{border-color:#d8cbe4}input:focus,select:focus,textarea:focus{box-shadow:0 0 0 3px #76539a26}
     #studentGroup,#teacherGroup{font-weight:800;min-height:58px}#studentGroup option,#teacherGroup option{font-weight:700}
+    .language-switch{display:flex;align-items:center;gap:4px;padding:4px;border:1px solid #c9a9dc;border-radius:999px;margin-left:auto}.language-switch a{color:#fff;text-decoration:none;padding:7px 13px;border-radius:999px;font-weight:800;white-space:nowrap}.language-switch a[aria-current="page"]{background:#fff;color:var(--deep)}
     .lesson-reading{max-width:920px;margin:30px 0 36px;font-size:18px;line-height:1.7}.lesson-reading .reading-intro{font-size:19px}.lesson-reading h2{font-size:clamp(24px,3vw,31px);margin:0 0 10px}.lesson-reading p{margin:0}.reading-section{padding:22px 25px;border-radius:16px;margin:18px 0}.reading-section.lavender{background:#f5effa;border:1px solid #e2d4ee}.reading-section.cream{background:#fbf6eb;border:1px solid #eadfc9}.reading-takeaway{padding:22px 25px;background:#eee8f6;border-left:4px solid #8a62a9;border-radius:0 14px 14px 0;margin-top:24px}
-    @media(max-width:850px){.grid{grid-template-columns:1fr}.cards{grid-template-columns:1fr}.teacher{order:-1}.top{padding:14px}.brand strong{font-size:20px}.pill{display:none}.score{grid-template-columns:1fr}main{min-height:0}}
+    @media(max-width:850px){.grid{grid-template-columns:1fr}.cards{grid-template-columns:1fr}.teacher{order:-1}.top{padding:14px}.brand strong{font-size:20px}.pill{display:none}.score{grid-template-columns:1fr}main{min-height:0}.language-switch a{padding:7px 9px;font-size:14px}}
     @media(max-width:420px){h1{font-size:32px}h2{font-size:29px}.wrap{width:calc(100% - 16px);margin-top:8px}main{padding:24px 18px}.lead{font-size:17px}}
   </style>
 </head>
@@ -48,6 +49,6 @@
       <section id="result" class="hidden"><p class="eyebrow">Дәрес тәмам</p><h1>Мәә шәә Аллаһ, син дәресне үттең!</h1><p class="lead" id="resultText"></p><div class="score"><div><strong id="scoreText"></strong><span>Дөрес җавап</span></div></div><div class="note">Ачык җавабыңны укытучы журналында да карап була.</div><h2>Ачык җавабың</h2><p class="open-preview" id="openPreview"></p><p class="result-instruction hidden" id="sendInstruction" role="status" aria-live="polite"></p><div class="actions"><button class="primary hidden" id="sendResultBtn" type="button" aria-describedby="sendInstruction">Кабат җибәрергә</button><button class="secondary" id="retryBtn" type="button">Кабат үтәргә</button></div><p class="small" id="resultSendNote" role="status" aria-live="polite"></p></section>
     </main>
   </div>
-  <script src="lessons.js?v=1"></script><script src="reading-data.js?v=20261007-1"></script><script src="app.js?v=journal-confirm-20261030"></script>
+  <script src="lessons.js?v=1"></script><script src="reading-data.js?v=20261101-1"></script><script src="lessons-ru.js?v=20261101-1"></script><script src="reading-data-ru.js?v=20261101-1"></script><script src="app.js?v=20261101-1"></script>
 </body>
 </html>
